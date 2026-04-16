@@ -1,0 +1,11 @@
+{
+  "projects": [
+    {
+      "projectKey": "waybook",
+      "label": "Waybook",
+      "repoRoots": [
+        "/public/home/jxtang/project/cs/waybook"
+      ]
+    }
+  ]
+}

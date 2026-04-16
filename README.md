@@ -1,41 +1,112 @@
 # Waybook
 
-Waybook is a personal research secretary that turns AI-native work into a living academic wiki.
+> Local-first research secretary for AI-native work.  
+> `Next.js 15` · `React 19` · `TypeScript` · `SQLite` · `Obsidian export`
 
-## What It Is
+Waybook turns fragmented activity across Claude, Codex, git, and experiment outputs into a usable research timeline, a living wiki, and scope-aware secretary drafts.
 
-Waybook is a local-first web platform for individual researchers and independent builders who run many AI-assisted projects in parallel. It captures research activity from Claude Code, Codex, git history, and experiment outputs, then compiles that activity into:
+## Why
 
-- a searchable research timeline
-- project and experiment pages
-- topic and method pages
-- daily and weekly review drafts
-- an optional Obsidian sync target
+AI-native work is productive but easy to lose:
 
-## Why It Exists
+- sessions are spread across tools and repositories
+- experiments outpace human summaries
+- conclusions stay buried in transcripts, diffs, and result folders
+- weekly orientation becomes harder as parallel work increases
 
-AI-native research workflows are productive but easy to lose track of:
+Waybook exists to recover continuity:
 
-- many ideas run in parallel
-- sessions are split across repos and tools
-- experiments happen faster than people can summarize them
-- useful conclusions stay buried in chat logs, diffs, and result folders
+- what happened
+- where it happened
+- what matters now
+- what should be promoted into durable knowledge
 
-Waybook exists to give the researcher a stable memory, a usable timeline, and a living personal wiki.
+## What It Does
+
+- Ingests live, derived, and seeded local sources
+- Persists raw evidence and normalized research events in SQLite
+- Builds project, experiment, and topic entities
+- Generates `daily-brief`, `daily-review`, and `weekly-review` drafts
+- Supports `portfolio`, `project`, and `repo` secretary scopes
+- Exports entities and reviews to Obsidian markdown
+
+## Architecture
+
+```text
+Claude / Codex / git / experiments / claude-mem
+                    |
+                    v
+           raw_source_events
+                    |
+                    v
+             research_events
+             /             \
+            v               v
+      wiki_entities     thread_states
+                             |
+                             v
+                        scope_digests
+                   (repo / project / portfolio)
+                             |
+                             v
+        daily-brief / daily-review / weekly-review
+                             |
+                             v
+                      Obsidian export
+```
+
+## Quick Start
+
+```bash
+npm install
+cp .env.example .env
+```
+
+Then edit:
+
+- `.env`
+- `data/project-registry.json`
+
+Run the pipeline:
+
+```bash
+npm run ingest
+npm run secretary
+npm run export:obsidian
+```
+
+Start the app:
+
+```bash
+npm run dev
+```
+
+## Scripts
+
+- `npm test`: run unit and integration tests
+- `npm run build`: production build
+- `npm run ingest`: collect and persist source events
+- `npm run secretary`: generate secretary drafts
+- `npm run export:obsidian`: export entities and reviews
+
+## Current State
+
+- The persisted research-memory backbone is working
+- Scope-aware secretary drafts are working
+- Legacy `daily` / `weekly` drafts have been removed in favor of:
+  - `daily-brief`
+  - `daily-review`
+  - `weekly-review`
+- `claude-mem` is supported with a recovery fallback when the upstream SQLite file is corrupted
 
 ## Project Docs
 
-- Product design: `docs/superpowers/specs/2026-04-15-waybook-design.md`
-- Implementation plan: `docs/superpowers/plans/2026-04-15-waybook-m1-research-memory-backbone.md`
+- [Product design](docs/superpowers/specs/2026-04-15-waybook-design.md)
+- [M1 backbone plan](docs/superpowers/plans/2026-04-15-waybook-m1-research-memory-backbone.md)
+- [Secretary scope design](docs/superpowers/specs/2026-04-16-waybook-secretary-scope-design.md)
+- [Secretary scope implementation plan](docs/superpowers/plans/2026-04-16-waybook-secretary-scope-implementation.md)
 
-## Initial Scope
+## Notes
 
-The first implementation milestone focuses on:
-
-- ingesting `claude-mem`, Codex, git, and experiment metadata
-- normalizing activity into a research event graph
-- rendering a timeline-first dashboard
-- compiling baseline wiki entities
-- exporting markdown to Obsidian as an optional sync target
-
-This repository currently contains planning artifacts only.
+- Runtime outputs under `data/` are not source-controlled artifacts
+- The repository keeps a checked-in `data/project-registry.json` as the default local project map

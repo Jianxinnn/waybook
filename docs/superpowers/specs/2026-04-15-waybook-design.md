@@ -325,7 +325,7 @@ Waybook uses a four-layer data model.
 
 ### 1. Raw Source Event
 
-Immutable records from each integration.
+Immutable records from each connector invocation.
 
 Examples:
 
@@ -337,12 +337,30 @@ Examples:
 Fields:
 
 - `id`
-- `source`
+- `source_family`
+- `connector_id`
+- `provenance_tier`
 - `source_event_id`
 - `captured_at`
+- `occurred_at`
 - `payload_json`
+- `cursor_token`
 - `repo_path`
 - `project_key`
+- `session_id`
+- `thread_id`
+
+Connector rules:
+
+- `source_family` describes the product-facing bucket: `claude`, `codex`, `git`, `experiment`
+- `connector_id` describes the concrete collector implementation: `claude-cli-jsonl`, `codex-rollout-jsonl`, `git-log`, `experiment-fs`, `claude-mem-sqlite`, `seed-fixture`
+- `provenance_tier` describes how direct the evidence is: `primary`, `derived`, `synthetic`
+
+This separation matters because Waybook should be able to:
+
+- prefer primary evidence when it exists
+- accept derived summaries when they add value
+- keep synthetic data clearly marked for demos and tests
 
 ### 2. Research Event
 
@@ -407,22 +425,31 @@ Fields:
 
 ### Claude Code / Claude Mem
 
-This is the highest-value input source for v1.
+Claude activity is the highest-value input family for v1, but Waybook should distinguish between direct Claude CLI records and `claude-mem` derived records.
 
-Waybook should pull:
+Primary connector:
 
-- observations
-- session summaries
-- prompt metadata
-- semantic context references when useful
+- Claude project session JSONL files
+- Claude history JSONL files
+
+Derived connector:
+
+- `claude-mem` observations
+- `claude-mem` session summaries
 
 Role:
 
-- captures the reasoning and tool-use layer of research
+- primary Claude records preserve the raw reasoning and tool-use trail
+- `claude-mem` adds useful derived summaries without becoming the source of truth
 
 ### Codex
 
-Waybook should ingest Codex transcript activity through a transcript watcher or exported session feed.
+Waybook should ingest Codex transcript activity from Codex-owned local state.
+
+Primary connectors:
+
+- Codex rollout session JSONL files
+- Codex thread index or state SQLite when needed to locate sessions
 
 Role:
 
@@ -454,6 +481,17 @@ Waybook should index:
 Role:
 
 - anchors research to empirical outputs
+
+## Connector Strategy
+
+M1 should ship a real persisted pipeline with mixed connector maturity.
+
+- At least one AI source should be live from primary local files
+- `git` should be live from repository history
+- experiment indexing should be live from the filesystem
+- seeded connectors are acceptable where no stable primary source is available yet
+
+Future milestones mainly replace connector implementations. They should not replace the event store, normalization layer, entity compiler, or UI surfaces.
 
 ## Search Model
 

@@ -1,0 +1,14 @@
+.worktrees/
+AGENTS.md
+.env
+.env.local
+.env.*.local
+.next/
+node_modules/
+data/cache/
+data/*.db
+data/*.db-*
+data/*.sqlite
+data/*.sqlite-*
+data/obsidian/
+data/obsidian-test/

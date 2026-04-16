@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first usable local Waybook release that ingests AI-native research activity, normalizes it into research events, renders a searchable timeline, and compiles baseline wiki entities.
+**Goal:** Build the first usable local Waybook release that runs a real persisted research-memory pipeline from source collection through export, with a mix of live and seeded connectors.
 
-**Architecture:** Use a single-repo TypeScript web app with Next.js for UI and HTTP endpoints, SQLite plus Drizzle for local persistence, server-side ingestion jobs for `claude-mem`, Codex, git, and experiment metadata, and a compiler layer that materializes project, topic, and experiment entities from normalized research events. Scope this plan to Milestone 1 only; Milestones 2 and 3 need separate plans after M1 ships.
+**Architecture:** Use a single-repo TypeScript web app with Next.js for UI and HTTP endpoints, SQLite plus Drizzle for local persistence, and a collector pipeline that distinguishes source family from connector implementation and provenance tier. M1 should ingest a combination of primary live local sources, derived summaries, and seeded fixtures, then normalize those raw records into research events, compile wiki entities, and export markdown. Scope this plan to Milestone 1 only; later milestones should mainly replace collector implementations rather than rewriting the product backbone.
 
 **Tech Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS, Drizzle ORM, SQLite, Zod, Vitest, Playwright, simple-git, chokidar
 
@@ -265,14 +265,16 @@ git add drizzle.config.ts drizzle src/server/db tests/db
 git commit -m "feat: add waybook persistence schema"
 ```
 
-## Task 3: Build Source Adapters For Claude-Mem, Codex, Git, And Experiments
+## Task 3: Build Source Adapters For Claude, Codex, Git, And Experiments
 
 **Files:**
 - Create: `src/types/source.ts`
-- Create: `src/server/ingest/claudeMemClient.ts`
-- Create: `src/server/ingest/codexTranscriptReader.ts`
+- Create: `src/server/ingest/claudeCollector.ts`
+- Create: `src/server/ingest/claudeMemCollector.ts`
+- Create: `src/server/ingest/codexCollector.ts`
 - Create: `src/server/ingest/gitCollector.ts`
 - Create: `src/server/ingest/experimentCollector.ts`
+- Create: `src/server/ingest/seedCollector.ts`
 - Create: `src/server/ingest/sourceRegistry.ts`
 - Test: `tests/ingest/sourceRegistry.test.ts`
 
@@ -283,12 +285,14 @@ import { describe, expect, it } from 'vitest';
 import { sourceRegistry } from '@/server/ingest/sourceRegistry';
 
 describe('source registry', () => {
-  it('registers the four v1 source collectors', () => {
-    expect(sourceRegistry.map((item) => item.source)).toEqual([
-      'claude-mem',
-      'codex',
-      'git',
-      'experiment'
+  it('registers the live and seeded v1 source collectors', () => {
+    expect(sourceRegistry.map((item) => item.connectorId)).toEqual([
+      'claude-cli-jsonl',
+      'claude-mem-sqlite',
+      'codex-rollout-jsonl',
+      'git-log',
+      'experiment-fs',
+      'seed-fixture'
     ]);
   });
 });
@@ -306,28 +310,42 @@ Expected: FAIL because the registry file does not exist.
 // src/types/source.ts
 export interface RawSourceEventInput {
   id: string;
-  source: 'claude-mem' | 'codex' | 'git' | 'experiment';
+  sourceFamily: 'claude' | 'codex' | 'git' | 'experiment';
+  connectorId:
+    | 'claude-cli-jsonl'
+    | 'claude-mem-sqlite'
+    | 'codex-rollout-jsonl'
+    | 'git-log'
+    | 'experiment-fs'
+    | 'seed-fixture';
+  provenanceTier: 'primary' | 'derived' | 'synthetic';
   sourceEventId: string;
   projectKey: string;
   repoPath: string;
   capturedAt: number;
+  occurredAt: number;
+  cursorToken?: string;
+  sessionId?: string;
+  threadId?: string;
   payload: Record<string, unknown>;
 }
 
 export interface SourceCollector {
-  source: RawSourceEventInput['source'];
+  sourceFamily: RawSourceEventInput['sourceFamily'];
+  connectorId: RawSourceEventInput['connectorId'];
   collect(): Promise<RawSourceEventInput[]>;
 }
 ```
 
-- [ ] **Step 4: Implement the four adapters with a consistent shape**
+- [ ] **Step 4: Implement the live, derived, and seeded adapters with a consistent shape**
 
 ```ts
-// src/server/ingest/claudeMemClient.ts
+// src/server/ingest/claudeCollector.ts
 import type { SourceCollector } from '@/types/source';
 
-export const claudeMemCollector: SourceCollector = {
-  source: 'claude-mem',
+export const claudeCollector: SourceCollector = {
+  sourceFamily: 'claude',
+  connectorId: 'claude-cli-jsonl',
   async collect() {
     return [];
   }
@@ -336,16 +354,20 @@ export const claudeMemCollector: SourceCollector = {
 
 ```ts
 // src/server/ingest/sourceRegistry.ts
-import { claudeMemCollector } from './claudeMemClient';
-import { codexCollector } from './codexTranscriptReader';
+import { claudeCollector } from './claudeCollector';
+import { claudeMemCollector } from './claudeMemCollector';
+import { codexCollector } from './codexCollector';
 import { gitCollector } from './gitCollector';
 import { experimentCollector } from './experimentCollector';
+import { seedCollector } from './seedCollector';
 
 export const sourceRegistry = [
+  claudeCollector,
   claudeMemCollector,
   codexCollector,
   gitCollector,
-  experimentCollector
+  experimentCollector,
+  seedCollector
 ];
 ```
 
@@ -353,7 +375,7 @@ export const sourceRegistry = [
 
 Run: `pnpm vitest tests/ingest/sourceRegistry.test.ts`
 
-Expected: PASS with the registry listing exactly four collectors.
+Expected: PASS with the registry listing the primary, derived, and synthetic collectors used in M1.
 
 - [ ] **Step 6: Commit the ingestion contracts**
 
