@@ -38,4 +38,22 @@ The first implementation milestone focuses on:
 - compiling baseline wiki entities
 - exporting markdown to Obsidian as an optional sync target
 
-This repository currently contains planning artifacts only.
+## Current M1 State
+
+This repository now includes a working local-first M1 bootstrap path rather than planning artifacts only.
+
+A fresh app instance ships with deterministic seed data that flows through the real server pipeline:
+
+- source collectors emit four non-empty raw events
+- raw events normalize into research timeline events
+- entity compilation produces at least project and topic entities
+- API routes and server-rendered pages read from that shared pipeline
+- Obsidian export writes entities into type-specific folders and preserves user-authored notes outside managed blocks on re-export
+
+## Running It
+
+- `npm run test`
+- `npm run build`
+- `npm run db:migrate`
+
+Then start the app with `npm run dev` and open the home page, timeline, entities API, or a project route such as `/projects/waybook-m1`.
