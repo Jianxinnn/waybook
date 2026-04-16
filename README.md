@@ -1,59 +1,77 @@
 # Waybook
 
-Waybook is a personal research secretary that turns AI-native work into a living academic wiki.
+Waybook is a local-first research memory app for AI-native work. It captures research activity, persists it in SQLite, and turns it into a timeline, entity pages, and Obsidian-ready markdown.
 
-## What It Is
+## Status
 
-Waybook is a local-first web platform for individual researchers and independent builders who run many AI-assisted projects in parallel. It captures research activity from Claude Code, Codex, git history, and experiment outputs, then compiles that activity into:
+This repository currently ships the M1 backbone:
 
-- a searchable research timeline
-- project and experiment pages
-- topic and method pages
-- daily and weekly review drafts
-- an optional Obsidian sync target
+- deterministic seeded collectors for Claude, Codex, git, and experiment events
+- persisted raw event / research event / wiki entity pipeline via SQLite + Drizzle
+- server-rendered dashboard, timeline, project pages, and JSON APIs
+- project, topic, and experiment entity compilation
+- Obsidian export with managed block updates and user-note preservation outside managed regions
 
-## Why It Exists
+## Tech Stack
 
-AI-native research workflows are productive but easy to lose track of:
+- Next.js 15
+- React 19
+- TypeScript
+- SQLite + Drizzle ORM
+- Vitest + Playwright
 
-- many ideas run in parallel
-- sessions are split across repos and tools
-- experiments happen faster than people can summarize them
-- useful conclusions stay buried in chat logs, diffs, and result folders
+## Quick Start
 
-Waybook exists to give the researcher a stable memory, a usable timeline, and a living personal wiki.
+### Requirements
 
-## Project Docs
+- Node.js 22+
+- pnpm 10+
+
+### Install
+
+```bash
+pnpm install
+```
+
+### Run
+
+```bash
+pnpm db:migrate
+pnpm dev
+```
+
+Open:
+
+- `/` — dashboard
+- `/timeline` — research timeline
+- `/projects/waybook-m1` — seeded project page
+- `/api/timeline` — timeline JSON
+- `/api/entities` — entity JSON
+- `/api/search?q=obsidian` — search JSON
+
+## Scripts
+
+```bash
+pnpm dev
+pnpm test -- --run
+pnpm build
+pnpm test:e2e
+pnpm db:generate
+pnpm db:migrate
+```
+
+## Project Structure
+
+```text
+src/app/        Next.js routes and API handlers
+src/components/ UI components
+src/server/     ingestion, persistence, pipeline, search, wiki, jobs
+tests/          unit and integration tests
+drizzle/        generated schema snapshots and SQL migrations
+docs/           product spec and implementation plan
+```
+
+## Docs
 
 - Product design: `docs/superpowers/specs/2026-04-15-waybook-design.md`
-- Implementation plan: `docs/superpowers/plans/2026-04-15-waybook-m1-research-memory-backbone.md`
-
-## Initial Scope
-
-The first implementation milestone focuses on:
-
-- ingesting `claude-mem`, Codex, git, and experiment metadata
-- normalizing activity into a research event graph
-- rendering a timeline-first dashboard
-- compiling baseline wiki entities
-- exporting markdown to Obsidian as an optional sync target
-
-## Current M1 State
-
-This repository now includes a working local-first M1 bootstrap path rather than planning artifacts only.
-
-A fresh app instance ships with deterministic seed data that flows through the real server pipeline:
-
-- source collectors emit four non-empty raw events
-- raw events normalize into research timeline events
-- entity compilation produces at least project and topic entities
-- API routes and server-rendered pages read from that shared pipeline
-- Obsidian export writes entities into type-specific folders and preserves user-authored notes outside managed blocks on re-export
-
-## Running It
-
-- `npm run test`
-- `npm run build`
-- `npm run db:migrate`
-
-Then start the app with `npm run dev` and open the home page, timeline, entities API, or a project route such as `/projects/waybook-m1`.
+- M1 plan: `docs/superpowers/plans/2026-04-15-waybook-m1-research-memory-backbone.md`
