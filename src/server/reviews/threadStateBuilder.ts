@@ -4,6 +4,18 @@ import type { ReviewThreadState } from '@/types/review';
 const GENERIC_TAGS = new Set(['claude', 'codex', 'git', 'experiment', 'primary', 'derived', 'synthetic']);
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+function compareStrings(left: string, right: string) {
+  if (left < right) {
+    return -1;
+  }
+
+  if (left > right) {
+    return 1;
+  }
+
+  return 0;
+}
+
 function uniqueStrings(values: string[]) {
   return [...new Set(values)].sort((left, right) => left.localeCompare(right));
 }
@@ -52,7 +64,13 @@ export function buildThreadStates(events: ResearchEvent[], now = Date.now()): Re
 
   return [...grouped.entries()]
     .map(([threadKey, threadEvents]) => {
-      const sorted = [...threadEvents].sort((left, right) => right.occurredAt - left.occurredAt);
+      const sorted = [...threadEvents].sort(
+        (left, right) =>
+          right.occurredAt - left.occurredAt ||
+          right.importanceScore - left.importanceScore ||
+          compareStrings(left.title, right.title) ||
+          compareStrings(left.id, right.id)
+      );
       const latest = sorted[0]!;
       const earliest = sorted[sorted.length - 1]!;
       const importanceScore =
@@ -75,5 +93,10 @@ export function buildThreadStates(events: ResearchEvent[], now = Date.now()): Re
         status: summarizeStatus(latest.occurredAt, now)
       } satisfies ReviewThreadState;
     })
-    .sort((left, right) => right.lastEventAt - left.lastEventAt || right.importanceScore - left.importanceScore);
+    .sort(
+      (left, right) =>
+        right.lastEventAt - left.lastEventAt ||
+        right.importanceScore - left.importanceScore ||
+        compareStrings(left.threadKey, right.threadKey)
+    );
 }

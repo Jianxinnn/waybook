@@ -3,7 +3,7 @@ import { createDatabaseClient } from '@/server/db/client';
 import { runSecretaryLoop } from '@/server/jobs/secretaryLoopJob';
 import { listReviewDrafts } from '@/server/reviews/reviewStore';
 import type { ReviewScope, ReviewType } from '@/types/review';
-import { buildAvailableScopes, matchesScope } from '@/server/reviews/scopeOptions';
+import { buildAvailableScopes } from '@/server/reviews/scopeOptions';
 import { listResearchEvents } from '@/server/search/timelineService';
 
 export const runtime = 'nodejs';
@@ -30,7 +30,6 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const scope = parseScope(url);
   const reviewTypes = parseReviewTypes(url);
-  await runSecretaryLoop(config, { useLlm: false, scope, reviewTypes });
   const client = createDatabaseClient(config.databasePath);
   const items = (await listReviewDrafts(client)).filter((draft) => {
     const matchesType = reviewTypes ? reviewTypes.includes(draft.reviewType) : true;

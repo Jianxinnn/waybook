@@ -6,6 +6,22 @@ import { createWaybookConfig } from '@/lib/config';
 import { loadProjectRegistry, resolveProjectForPath } from '@/lib/projectRegistry';
 
 describe('project registry', () => {
+  it('treats stringified undefined env values as unset configuration', () => {
+    process.env.WAYBOOK_DATABASE_PATH = 'undefined';
+    process.env.WAYBOOK_EXPORT_ROOT = 'undefined';
+    process.env.WAYBOOK_PROJECT_REGISTRY_PATH = 'undefined';
+
+    const config = createWaybookConfig();
+
+    expect(config.databasePath.endsWith(path.join('data', 'waybook.test.sqlite')) || config.databasePath.endsWith(path.join('data', 'waybook.sqlite'))).toBe(true);
+    expect(config.exportRoot.includes(path.join('data', 'obsidian'))).toBe(true);
+    expect(config.projectRegistryPath.includes(path.join('data', 'project-registry.json'))).toBe(true);
+
+    delete process.env.WAYBOOK_DATABASE_PATH;
+    delete process.env.WAYBOOK_EXPORT_ROOT;
+    delete process.env.WAYBOOK_PROJECT_REGISTRY_PATH;
+  });
+
   it('maps multiple repo roots into one logical project key', async () => {
     const root = await mkdtemp(path.join(tmpdir(), 'waybook-project-registry-'));
     const registryPath = path.join(root, 'project-registry.json');

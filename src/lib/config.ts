@@ -22,23 +22,38 @@ const configSchema = z.object({
 
 export type WaybookConfig = z.infer<typeof configSchema>;
 
+function normalizeEnvString(value: string | undefined) {
+  if (value == null) {
+    return undefined;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed === '' || trimmed.toLowerCase() === 'undefined' || trimmed.toLowerCase() === 'null') {
+    return undefined;
+  }
+
+  return trimmed;
+}
+
 function parsePathList(value: string | undefined) {
-  if (!value) {
+  const normalized = normalizeEnvString(value);
+  if (!normalized) {
     return [];
   }
 
-  return value
+  return normalized
     .split(path.delimiter)
     .map((item) => item.trim())
     .filter(Boolean);
 }
 
 function parseBoolean(value: string | undefined, fallback: boolean) {
-  if (value == null || value === '') {
+  const normalized = normalizeEnvString(value);
+  if (normalized == null) {
     return fallback;
   }
 
-  return ['1', 'true', 'yes', 'on'].includes(value.toLowerCase());
+  return ['1', 'true', 'yes', 'on'].includes(normalized.toLowerCase());
 }
 
 export function createWaybookConfig(overrides: Partial<WaybookConfig> = {}): WaybookConfig {
@@ -52,13 +67,14 @@ export function createWaybookConfig(overrides: Partial<WaybookConfig> = {}): Way
     : path.join(process.cwd(), 'data', 'obsidian');
 
   return configSchema.parse({
-    databasePath: process.env.WAYBOOK_DATABASE_PATH ?? defaultDatabasePath,
-    exportRoot: process.env.WAYBOOK_EXPORT_ROOT ?? defaultExportRoot,
+    databasePath: normalizeEnvString(process.env.WAYBOOK_DATABASE_PATH) ?? defaultDatabasePath,
+    exportRoot: normalizeEnvString(process.env.WAYBOOK_EXPORT_ROOT) ?? defaultExportRoot,
     projectRegistryPath:
-      process.env.WAYBOOK_PROJECT_REGISTRY_PATH ??
+      normalizeEnvString(process.env.WAYBOOK_PROJECT_REGISTRY_PATH) ??
       path.join(process.cwd(), 'data', 'project-registry.json'),
     claudeProjectsRoots: parsePathList(process.env.WAYBOOK_CLAUDE_PROJECT_ROOTS),
-    claudeMemDbPath: process.env.WAYBOOK_CLAUDE_MEM_DB_PATH ?? path.join(home, '.claude-mem', 'missing.db'),
+    claudeMemDbPath:
+      normalizeEnvString(process.env.WAYBOOK_CLAUDE_MEM_DB_PATH) ?? path.join(home, '.claude-mem', 'missing.db'),
     codexSessionsRoots: parsePathList(process.env.WAYBOOK_CODEX_SESSION_ROOTS),
     repoRoots: parsePathList(process.env.WAYBOOK_REPO_ROOTS).length
       ? parsePathList(process.env.WAYBOOK_REPO_ROOTS)
@@ -67,10 +83,10 @@ export function createWaybookConfig(overrides: Partial<WaybookConfig> = {}): Way
       ? parsePathList(process.env.WAYBOOK_EXPERIMENT_ROOTS)
       : [path.join(process.cwd(), 'data', 'experiments')],
     seededSourcesEnabled: parseBoolean(process.env.WAYBOOK_SEEDED_SOURCES_ENABLED, true),
-    llmProvider: process.env.WAYBOOK_LLM_PROVIDER ?? null,
-    llmModel: process.env.WAYBOOK_LLM_MODEL ?? null,
-    llmApiKey: process.env.WAYBOOK_LLM_API_KEY ?? null,
-    llmBaseUrl: process.env.WAYBOOK_LLM_BASE_URL ?? null,
+    llmProvider: normalizeEnvString(process.env.WAYBOOK_LLM_PROVIDER) ?? null,
+    llmModel: normalizeEnvString(process.env.WAYBOOK_LLM_MODEL) ?? null,
+    llmApiKey: normalizeEnvString(process.env.WAYBOOK_LLM_API_KEY) ?? null,
+    llmBaseUrl: normalizeEnvString(process.env.WAYBOOK_LLM_BASE_URL) ?? null,
     llmGenerationEnabled: parseBoolean(process.env.WAYBOOK_LLM_GENERATION_ENABLED, false),
     secretaryAutogenerateOnRead: parseBoolean(process.env.WAYBOOK_SECRETARY_AUTOGENERATE_ON_READ, true),
     ...overrides

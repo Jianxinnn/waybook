@@ -1,3 +1,12 @@
+import type { Lang } from '@/lib/i18n';
+import { dict } from '@/lib/i18n';
+import {
+  formatWorkspaceDay,
+  formatWorkspaceTime,
+  relativeDayLabel,
+  startOfDay
+} from '@/components/workspace/formatting';
+
 type TimelineListItem = {
   id: string;
   title: string;
@@ -6,50 +15,90 @@ type TimelineListItem = {
   projectKey: string;
   occurredAt: number;
   sourceFamily: string;
+  connectorId?: string;
   provenanceTier: string;
   tags: string[];
   files: string[];
+  importanceScore?: number;
 };
 
-interface TimelineListProps {
-  items: TimelineListItem[];
+const SOURCE_COLOR: Record<string, string> = {
+  claude: 'text-violet-600',
+  codex: 'text-sky-600',
+  git: 'text-emerald-600',
+  experiment: 'text-fuchsia-600',
+  seed: 'text-stone-400'
+};
+
+function groupByDay(items: TimelineListItem[]) {
+  const groups = new Map<number, TimelineListItem[]>();
+  for (const it of items) {
+    const day = startOfDay(it.occurredAt);
+    const bucket = groups.get(day) ?? [];
+    bucket.push(it);
+    groups.set(day, bucket);
+  }
+  return [...groups.entries()]
+    .sort((a, b) => b[0] - a[0])
+    .map(([day, entries]) => ({
+      day,
+      entries: entries.sort((a, b) => b.occurredAt - a.occurredAt)
+    }));
 }
 
-function formatTimestamp(timestamp: number) {
-  return new Date(timestamp).toISOString().replace('T', ' ').slice(0, 16);
-}
+export function TimelineList({ items, lang = 'en' }: { items: TimelineListItem[]; lang?: Lang }) {
+  const t = dict[lang];
 
-export function TimelineList({ items }: TimelineListProps) {
   if (items.length === 0) {
-    return (
-      <div className="rounded-3xl border border-dashed border-stone-300 bg-white/70 p-6 text-sm text-stone-500">
-        No timeline events have been collected yet.
-      </div>
-    );
+    return <p className="muted text-sm">{t.timeline.noEvents}</p>;
   }
 
+  const groups = groupByDay(items);
+
   return (
-    <ol className="space-y-4">
-      {items.map((item) => (
-        <li key={item.id} className="rounded-3xl border border-stone-200 bg-white p-5 shadow-sm">
-          <div className="flex flex-wrap items-center gap-3 text-xs font-medium uppercase tracking-[0.2em] text-stone-500">
-            <span>{item.eventType}</span>
-            <span>{item.projectKey}</span>
-            <span>{item.sourceFamily}</span>
-            <span>{item.provenanceTier}</span>
-          </div>
-          <h3 className="mt-3 text-xl font-semibold text-stone-900">{item.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-stone-600">{item.summary}</p>
-          <div className="mt-4 flex flex-wrap gap-2 text-xs text-stone-500">
-            <span>{formatTimestamp(item.occurredAt)}</span>
-            {item.files.slice(0, 3).map((filePath) => (
-              <span key={filePath} className="rounded-full bg-stone-100 px-3 py-1">
-                {filePath}
+    <div className="space-y-10">
+      {groups.map((group) => {
+        const relative = relativeDayLabel(group.day, lang);
+        const dayLabel = formatWorkspaceDay(group.day, lang);
+        return (
+          <section key={group.day}>
+            <h3 className="serif mb-2 text-[15px] font-semibold text-stone-900">
+              {relative ?? dayLabel}
+              {relative ? <span className="caption ml-3 font-normal">{dayLabel}</span> : null}
+              <span className="caption ml-3 font-normal num">
+                · {t.timeline.events(group.entries.length)}
               </span>
-            ))}
-          </div>
-        </li>
-      ))}
-    </ol>
+            </h3>
+            <div>
+              {group.entries.map((item) => {
+                const color = SOURCE_COLOR[item.sourceFamily] ?? 'text-stone-500';
+                return (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-[56px_1fr] gap-x-4 border-b border-stone-200/60 py-3"
+                  >
+                    <div className="caption pt-0.5 text-right num">
+                      {formatWorkspaceTime(item.occurredAt, lang)}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-baseline gap-2 text-sm">
+                        <span className="font-medium text-stone-900">{item.title}</span>
+                        <span className="caption">{item.projectKey}</span>
+                        <span className={`caption ${color}`}>{item.sourceFamily}</span>
+                      </div>
+                      {item.summary ? (
+                        <div className="mt-0.5 truncate text-[13px] leading-5 text-stone-500">
+                          {item.summary}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+    </div>
   );
 }

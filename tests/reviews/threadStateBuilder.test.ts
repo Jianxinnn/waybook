@@ -78,4 +78,53 @@ describe('buildThreadStates', () => {
     expect(assistantThread?.exemplarTitles.length).toBeLessThanOrEqual(3);
     expect(assistantThread?.topTags).toEqual(expect.arrayContaining(['assistant', 'dashboard']));
   });
+
+  it('orders tied thread snapshots deterministically by threadKey', () => {
+    const occurredAt = Date.parse('2026-04-16T10:00:00Z');
+    const events: ResearchEvent[] = [
+      {
+        id: 'event-zeta',
+        rawEventId: 'raw-zeta',
+        sourceFamily: 'git',
+        connectorId: 'git-log',
+        provenanceTier: 'primary',
+        eventType: 'git.commit',
+        title: 'Zeta thread update',
+        summary: 'Zeta summary.',
+        projectKey: 'waybook',
+        repoPath: '/repo/waybook',
+        threadKey: 'project:waybook:zeta',
+        occurredAt,
+        actorKind: 'user',
+        evidenceRefs: ['git:zeta'],
+        files: ['src/zeta.ts'],
+        tags: ['workspace'],
+        importanceScore: 0.8
+      },
+      {
+        id: 'event-alpha',
+        rawEventId: 'raw-alpha',
+        sourceFamily: 'git',
+        connectorId: 'git-log',
+        provenanceTier: 'primary',
+        eventType: 'git.commit',
+        title: 'Alpha thread update',
+        summary: 'Alpha summary.',
+        projectKey: 'waybook',
+        repoPath: '/repo/waybook',
+        threadKey: 'project:waybook:alpha',
+        occurredAt,
+        actorKind: 'user',
+        evidenceRefs: ['git:alpha'],
+        files: ['src/alpha.ts'],
+        tags: ['workspace'],
+        importanceScore: 0.8
+      }
+    ];
+
+    expect(buildThreadStates(events, Date.parse('2026-04-16T23:00:00Z')).map((thread) => thread.threadKey)).toEqual([
+      'project:waybook:alpha',
+      'project:waybook:zeta'
+    ]);
+  });
 });

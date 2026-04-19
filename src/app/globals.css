@@ -4,20 +4,34 @@
 
 :root {
   color-scheme: light;
-  --background: #f6efe2;
-  --surface: rgba(255, 255, 255, 0.76);
-  --foreground: #1c1917;
+  --paper: #f6efe2;
+  --paper-soft: #efe6d2;
+  --ink: #1b1815;
+  --ink-strong: #0f0d0b;
+  --ink-muted: #6b655d;
+  --ink-faint: #9a938a;
+  --rule: rgba(27, 24, 21, 0.12);
+  --rule-strong: rgba(27, 24, 21, 0.2);
+  --accent: #a85a1a;
+  --accent-soft: rgba(168, 90, 26, 0.08);
+}
+
+html {
+  background: var(--paper);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top, rgba(245, 158, 11, 0.18), transparent 32%),
-    linear-gradient(180deg, #fffaf2 0%, #f5efe5 42%, #efe7da 100%);
-  color: var(--foreground);
+  background: var(--paper);
+  color: var(--ink);
   font-family:
-    "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    ui-sans-serif, system-ui, -apple-system, "Helvetica Neue", "PingFang SC",
+    "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 a {
@@ -25,6 +39,279 @@ a {
   text-decoration: none;
 }
 
+a:hover {
+  color: var(--accent);
+}
+
 * {
   box-sizing: border-box;
+}
+
+/* ---- Primitive utilities ---------------------------------------------- */
+
+.serif {
+  font-family: "Iowan Old Style", "Source Serif Pro", "Noto Serif SC",
+    "Palatino Linotype", Palatino, Georgia, serif;
+  letter-spacing: -0.005em;
+}
+
+.rule {
+  border: none;
+  border-top: 1px solid var(--rule);
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+.faint {
+  color: var(--ink-faint);
+}
+
+.caption {
+  font-size: 12px;
+  color: var(--ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Editorial chrome ------------------------------------------------- */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.lead {
+  font-family: "Iowan Old Style", "Source Serif Pro", "Noto Serif SC",
+    "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(27, 24, 21, 0.06);
+  color: var(--ink-muted);
+  letter-spacing: 0.02em;
+}
+
+.pill-accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pill-emerald {
+  background: rgba(16, 122, 87, 0.1);
+  color: #0c6f4f;
+}
+
+.pill-amber {
+  background: rgba(176, 122, 19, 0.12);
+  color: #8a5b10;
+}
+
+/* ---- Prose (managed markdown) ----------------------------------------- */
+
+.prose {
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.75;
+  max-width: 66ch;
+}
+
+.prose > * + * {
+  margin-top: 1.2em;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: "Iowan Old Style", "Source Serif Pro", "Noto Serif SC",
+    "Palatino Linotype", Palatino, Georgia, serif;
+  color: var(--ink-strong);
+  letter-spacing: -0.005em;
+  line-height: 1.25;
+}
+
+.prose h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-top: 1.4em;
+}
+
+.prose h2 {
+  font-size: 22px;
+  font-weight: 600;
+  margin-top: 2em;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid var(--rule);
+}
+
+.prose h3 {
+  font-size: 17px;
+  font-weight: 600;
+  margin-top: 1.6em;
+  color: var(--ink);
+}
+
+.prose h2 + p,
+.prose h2 + ul,
+.prose h2 + ol {
+  margin-top: 0.8em;
+}
+
+.prose p {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.prose strong {
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+
+.prose em {
+  font-style: italic;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.3em;
+}
+
+.prose ul {
+  list-style: disc;
+}
+
+.prose ol {
+  list-style: decimal;
+}
+
+.prose li {
+  margin-top: 0.35em;
+  padding-left: 0.1em;
+}
+
+.prose li::marker {
+  color: var(--ink-faint);
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--accent);
+  padding: 0.1em 0 0.1em 1em;
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  background: rgba(27, 24, 21, 0.06);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.prose pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  background: rgba(27, 24, 21, 0.04);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 0.9em 1em;
+  overflow-x: auto;
+  line-height: 1.55;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+.prose a {
+  color: var(--accent);
+  border-bottom: 1px solid currentColor;
+}
+
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--rule);
+  margin: 2em 0;
+}
+
+.prose-lede > p:first-child {
+  font-family: "Iowan Old Style", "Source Serif Pro", "Noto Serif SC",
+    "Palatino Linotype", Palatino, Georgia, serif;
+  font-size: 19px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+/* ---- Prose: tables + nested lists ----- */
+
+.prose-table-wrap {
+  overflow-x: auto;
+  margin-top: 1.2em;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.prose thead th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--ink-strong);
+  padding: 0.5em 0.75em;
+  border-bottom: 2px solid var(--rule-strong);
+  letter-spacing: 0.01em;
+}
+
+.prose tbody td {
+  padding: 0.5em 0.75em;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+  color: var(--ink);
+}
+
+.prose tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.prose li > ul,
+.prose li > ol {
+  margin-top: 0.35em;
+  margin-bottom: 0.35em;
+  padding-left: 1.2em;
+}
+
+.prose li > ul {
+  list-style: circle;
+}
+
+.prose li > ul li > ul {
+  list-style: square;
 }
