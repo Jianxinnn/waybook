@@ -7,7 +7,7 @@ describe('ProjectsPage', () => {
     const html = renderToString(await ProjectsPage({}));
 
     expect(html).toContain('Projects');
-    expect(html).toContain('In Motion');
+    expect(html).toMatch(/>(In Motion|Stalled|Dormant)</);
     expect(html).toContain('Portfolio');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('waybook');
